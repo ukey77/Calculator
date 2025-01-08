@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- icon : xeicon -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xeicon@2.3.3/xeicon.min.css">
+  <!-- icon : font-awesome -->
+  <script src="https://kit.fontawesome.com/5f8658d4f2.js" crossorigin="anonymous"></script>
+  <!-- font : NotoSans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+    rel="stylesheet">
+  <!-- font : 수식문자열 -->
+  <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Math&display=swap" rel="stylesheet">
+  <!-- favicon -->
+  <link rel="icon" href="images/calcFavicon_1.png" type="image/x-icon">
+  <title>Calculator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      font-size: 23px;
+      color: #222;
+      font-family: "Noto Sans", sans-serif;
+      font-weight: 600;
+      box-sizing: border-box;
+
+      /*드래그방지*/
+    	-webkit-user-select: none;
+    	-moz-user-select: none;
+    	-ms-user-select: none;
+    	user-select: none;
+    }
+
+    body {
+      background: #f0f0f0;
+    }
+
+    .Container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .pageTitle {
+      padding: 40px 0;
+      font-size: 50px;
+      text-align: center;
+      width: 100%;
+      margin-bottom: 50px;
+      background-color: #ced3d69d;
+      margin: 0 auto;
+      margin-bottom: 80px;
+      font-weight: 600;
+      border-radius: 0 0 80px 80px;
+      letter-spacing: 1px;
+    }
+
+    .calcWrapper {
+      padding: 60px 60px 0;
+      width: 1800px;
+      /* height: 90%; */
+      display: flex;
+      justify-content: space-evenly;
+      align-items: center;
+      margin: 0 auto;
+      flex-wrap: wrap;
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .calcArea {
+      display: flex;
+      margin-bottom: 60px;
+    }
+
+    .icon,
+    i {
+      font-size: 17px;
+      cursor: pointer;
+      font-weight: 500;
+      pointer-events: none;
+      /*구글링 : i tag 영역누를시 버튼이 클릭안되는걸 막기위해*/
+    }
+
+    /* inputBox 화살표 제거 */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* createCalcBtn */
+    .createCalcBtn {
+      position: fixed;
+      right: 50px;
+      bottom: 30px;
+      display: flex;
+      align-items: center;
+      transition: 0.3s;
+    }
+
+    .createCalcBtn:hover .calcBtn {
+      background-color: #a5a2a2;
+      box-shadow: inset -3px -3px 7px #ffffff73, inset 3px 3px 5px rgba(108, 113, 122, 0.555);
+      transform: translateY(-2px);
+    }
+
+    .createCalcBtn:hover .calcIcon {
+      box-shadow: inset -3px -3px 7px #ffffff71, inset 3px 3px 5px rgba(108, 113, 122, 0.315);
+    }
+
+    .calcBtn {
+      position: relative;
+      display: inline-block;
+      color: #222;
+      width: 200px;
+      padding: 15px 25px;
+      border: none;
+      font-size: 18px;
+      font-weight: bold;
+      background: #babdc2;
+      box-shadow: -3px -3px 7px #ffffff73;
+      box-shadow: inset -3px -3px 7px #9999994f;
+      border-radius: 0px 20px 20px 0px;
+      transition: background-color 0.3s, transform 0.3s;
+      z-index: 1;
+    }
+
+    .calcIcon {
+      position: absolute;
+      left: -48px;
+      top: -5.5px;
+      background: #dbdee0;
+      width: 70px;
+      height: 70px;
+      line-height: 70px;
+      border-radius: 50%;
+      text-align: center;
+      font-size: 20px;
+      pointer-events: all;
+      box-shadow: -3px -3px 7px #ffffff73;
+      box-shadow: inset -3px -3px 7px #99999973;
+    }
+
+    .calcCreationNotice {
+      position: fixed;
+      left: 50%;
+      bottom: 37px;
+      transform: translate(-50%);
+      background: #222;
+      color: #fff;
+      padding: 12px 25px 13px;
+      border-radius: 10px;
+      opacity: 0;
+      transition: 0.7s;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="Container">
+    <h1 class="pageTitle">Calculator &amp; Graph</h1>
+    <div id="calcWrapper" class="calcWrapper">
+      <div id="calcArea1" class="calcArea"></div>
+    </div>
+    <article id="createCalcBtn" class="createCalcBtn">
+      <button id="calcBtn" class="calcBtn"><i class="fa-solid fa-plus calcIcon"></i>Add
+        Calculator</button>
+    </article>
+    <div id="calcCreationNotice" class="calcCreationNotice">
+      <p>Calculator created</p>
+    </div>
+  </div>
+
+  <!-- script -->
+  <script>
+
+    // ^Calculator
+    class Calculator {
+      constructor(id) {
+        this.id = id;
+      }
+      initCalc(targetDom) {
+        const HTMLcomponent = `
+          <div class="mainBox" id="mainBox${this.id}">
+          <div id="graphDisplay${this.id}" class="graphDisplayBtnBox">GRAPH</div>
+          <div class="resultArea" id="result${this.id}">0</div>
+
+          <section class="floatRangeArea">
+            <input id="floatRange${this.id}" class="floatRange" type="range" min="0" max="4" value="0">
+            <article class="floatTextArea">
+              <span>F</span><span>4</span><span>3</span><span>2</span><span>0</span>
+            </article>
+          </section>
+
+          <article class="btnArea">
+            <button class="bCGray" data-value="C">C</button>
+            <button class="bCGray" data-value="(">(</button>
+            <button class="bCGray" data-value=")">)</button> 
+            <button class="bCGray" data-value=">"><i class="fa-solid fa-play"></i></button>
+            <button data-value="7">7</button>
+            <button data-value="8">8</button>
+            <button data-value="9">9</button>
+            <button class="bCDark" data-value="/"><i class="fa-solid fa-divide"></i></button>
+            <button data-value="4">4</button>
+            <button data-value="5">5</button>
+            <button data-value="6">6</button>
+            <button class="bCDark" data-value="*"><i class="xi-close icon"></i></button>
+            <button data-value="1">1</button>
+            <button data-value="2">2</button>
+            <button data-value="3">3</button>
+            <button class="bCDark" data-value="-"><i class="xi-minus icon"></i></button>
+            <button data-value="0">0</button>
+            <button data-value=".">.</button>
+            <button class="bCRed" data-value="=">=</button>
+            <button class="bCDark" data-value="+"><i class="xi-plus icon"></i></button>
+          </article>
+          </div>`;
+        const CSScomponent = `
+          .mainBox {
+              position: relative;
+              width: 340px;
+              height: 565px;
+              padding: 20px;
+              box-shadow: rgba(39, 39, 39, 0.3) 0px 19px 38px, rgba(0, 0, 0, 0.1) 0px 15px 12px;
+              border-radius: 10px;
+              margin: 0 auto;
+              background-color: #E7E8EB;
+              }
+
+            .resultArea {
+              width: 98%;
+              height: 20%;
+              background-color: #C8CBD3;
+              text-align: right;
+              margin: 0 auto;
+              margin-bottom: 10px;
+              border-radius: 10px;
+              padding: 10px 20px;
+              box-sizing: border-box;
+              line-height: 88px;
+              font-size: 40px;
+              overflow: hidden;
+            }
+
+            /* scrollBar */
+            .resultArea::-webkit-scrollbar {
+              width: 3px;
+              height: 8px;
+            }
+
+            .resultArea::-webkit-scrollbar-track {
+              background-color: gray;
+            }
+
+            .resultArea::-webkit-scrollbar-thumb {
+              background-color: #ffca1d;
+            }
+
+            .resultArea::-webkit-scrollbar-button {
+              display: none;
+            }
+
+            .btnArea {
+              width: 97%;
+              text-align: center;
+              padding-top: 8px;
+              margin: 0 auto;
+            }
+
+            button {
+              width: 61px;
+              height: 61px;
+              border-radius: 50%;
+              margin: 5px 2px;
+              border: 0;
+              box-shadow: rgba(99, 99, 99, 0.18) 0px 3px 2px 0px;
+              background-color: #fff;
+            }
+
+            button:hover {
+              background-color: #f4f4f4;
+            }
+
+            button:active {
+              box-shadow: inset rgba(99, 99, 99, 0.4) 0px 1px 3px 0px;
+            }
+
+            .bCGray {
+              background-color: #D7D8DD;
+            }
+
+            .bCGray:hover {
+              background-color: #C4C6CC;
+            }
+
+            .bCDark {
+              background-color: #A8A9B3;
+              color: #fff;
+            }
+
+            .bCDark:hover {
+              background-color: #8E8F99;
+            }
+
+            .bCRed {
+              background-color: #F55062;
+              color: #fff;
+            }
+
+            .bCRed:hover {
+              background-color: #D43F53;
+            }
+
+            /* ==range== */
+            .floatRangeArea {
+              /* border: 1px solid red; */
+              width: 97%;
+              margin: 0 auto;
+              display: flex;
+              flex-direction: column;
+              align-items: flex-end;
+
+            }
+
+            .floatTextArea {
+              width: 40%;
+              display: flex;
+              justify-content: space-between;
+              box-sizing: border-box;
+              padding: 5px 5px 0;
+            }
+
+            .floatTextArea>span {
+              font-size: 15px;
+            }
+
+            /* floatRange */
+            .floatRange {
+              width: 40%;
+              border-radius: 8px;
+              outline: none;
+              -webkit-appearance: none;
+              accent-color: #ffca1d;
+              margin-top: 6px;
+            }
+            .graphDisplayBtnBox {
+              position: absolute;
+              left: 22.5%;
+              top: 28%;
+              transform: translate(-50%, -50%);
+              background: linear-gradient(to right, #8c8c92 0%, #cbcfd8 51%, #8c8c92 100%);
+              width: 100px;
+              height: 37px;
+              text-align: center;
+              transition: 0.4s;
+              background-size: 200% auto;
+              color: rgb(255, 255, 255);
+              box-shadow: 0 0 20px #eee;
+              border-radius: 15px;
+              font-size: 18px;
+              line-height: 37px;
+	      cursor: pointer;
+              box-shadow: rgba(43, 43, 43, 0.692) 0px 1px 2px 0px;
+            }
+
+            .graphDisplayBtnBox:hover {
+              background-position: right center;
+              color: #fff;
+            }
+
+            .graphDisplayBtnBox:active {
+              box-shadow: inset rgba(43, 43, 43, 0.452) 0px 1px 3px 0px;
+            }
+            `;
+        targetDom.innerHTML += `
+        ${HTMLcomponent}
+        <style>${CSScomponent}</style>
+        `;
+      }//$initCalc
+      showData(outputDom, resultContext) {
+        // DOMUpdate
+        const DOMUpdate = () => {
+          let tempCalc = '';
+          resultContext.currentStorage.forEach((value) => {
+            tempCalc += value;
+          });
+          return tempCalc;
+        }
+
+        if (resultContext.isResultChecked) {
+          outputDom.innerHTML = '';
+          const tempCalc = DOMUpdate();
+          const resultCalc = tempCalc === '' ? 0 : tempCalc;
+          try {
+            const calculatedResult = Number(eval(resultCalc));
+            const decimalPlaces = resultContext.floatPrecision
+            let resultText = calculatedResult.toFixed(decimalPlaces);
+
+            // f로 설정되어있으면서 정수부분일때 소수점 출력 안되게
+            if (decimalPlaces == 9 && Number.isInteger(calculatedResult)) {
+              resultText = calculatedResult.toLocaleString();
+            } else if (decimalPlaces > 0) {
+              resultText = calculatedResult.toFixed(decimalPlaces);
+            }
+
+            // 결과값의 length가 11자리 초과일시 스크롤발생
+            if (resultText.length > 11) {
+              outputDom.style.overflowX = "scroll";
+            } else {
+              outputDom.style.overflow = "hidden";
+            }
+            outputDom.innerHTML = resultText;
+
+          } catch (err) {
+            outputDom.innerHTML = "Try Again";
+          }
+        } else {
+          outputDom.innerHTML = '';
+          outputDom.style.overflow = "hidden";
+          const resultText = DOMUpdate();
+          outputDom.innerHTML = resultText;
+        }
+      }//$showData
+      receiveData(outputDom) {
+        class Deck {
+          constructor(id) {
+            this.id = id;
+            this.storage = [];
+          }
+          pushItem(item) { this.storage.push(item); }
+          popItem() { return this.storage.pop(); }
+          unshiftItem(item) { this.storage.unshift(item); }
+          shiftItem() { return this.storage.shift(); }
+          countDeck() { return this.storage.length; }
+          refreshDeck() { this.storage = []; }
+        } //end_Deck
+
+        const calcDeck = new Deck('calcDeck'); // new Deck
+
+        const resultContext = {
+          currentStorage: [],
+          isResultChecked: false,
+          floatPrecision: 9
+        }
+
+        const valueUpdate = () => {
+          resultContext.currentStorage = [];
+          resultContext.isResultChecked = false;
+
+          const tempArr = [];
+          for (let i = calcDeck.countDeck() - 1; i >= 0; i--) {
+            tempArr.push(calcDeck.shiftItem());
+          }
+          tempArr.forEach((value) => {
+            calcDeck.pushItem(value);
+            resultContext.currentStorage.push(value);
+          })
+        }
+
+        // 소수점 변화
+        document.getElementById(`floatRange${this.id}`).addEventListener("input", (event) => {
+          const floatValue = [9, 4, 3, 2, 0];
+          resultContext.floatPrecision = floatValue[event.target.value];
+        })
+
+        document.getElementById(`mainBox${this.id}`).addEventListener("click", (e) => {
+          //  const e = e ? e : event;
+          if (e.target.dataset.value != null) {
+            switch (e.target.dataset.value) {
+              case ">":
+                calcDeck.popItem();
+                valueUpdate();
+                this.showData(outputDom, resultContext);
+                break;
+              case "=":
+                calcDeck.refreshDeck();
+                resultContext.isResultChecked = true;
+                this.showData(outputDom, resultContext);
+                break;
+              case "C":
+                calcDeck.refreshDeck();
+                valueUpdate();
+                this.showData(outputDom, resultContext);
+                break;
+              default:
+                calcDeck.pushItem(e.target.dataset.value);
+                valueUpdate();
+                this.showData(outputDom, resultContext);
+            }
+          }
+        }); //onclick_event
+      }//$receiveData
+      graphCalc(targetDom) {
+        // ^GraphCal
+        class GraphCal {
+          constructor(id) {
+            this.id = id;
+          }
+          initCalc(targetDom) {
+            const HTMLcomponent = `
+        <div id="equationWrap${this.id}" class="equationWrap">
+          <section id="${this.id}Area" class="equationArea">
+
+            <section class="linearEquation equationForm removeMargin">
+              <div id="linearList${this.id}" class="equationListBox">
+                <h2 class="equationTitle">Linear Equation</h2><i id="linearListIcon${this.id}"
+                  class="xi-angle-down listShowIcon"></i>
+              </div>
+              <article id="linearControls${this.id}" class="equationControls">
+                <div id="linearInputBox" class="equationInputBox">
+                  <p class="mathFont">y = <input class="graphValueInput" id="linearInput${this.id}1" type="text" placeholder="a" value=''> x<sup></sup> + <input class="graphValueInput"
+                      id="linearInput${this.id}2" type="text" placeholder="b" value=''></p>
+                </div>
+                <div class="graphRenderButtonBox">
+                  <button id="linearBtn${this.id}" class="renderGraphBtn linearBtn"></button>
+                </div>
+              </article>
+              <div class="eqListUnderLine"></div>
+            </section>
+
+            <section class="quadraticEquation equationForm">
+              <div id="quadraticList${this.id}" class="equationListBox">
+                <h2 class="equationTitle">Quadratic Equation</h2><i id="quadraticListIcon${this.id}"
+                  class="xi-angle-down listShowIcon"></i>
+              </div>
+              <article id="quadraticControls${this.id}" class="equationControls">
+                <div class="equationInputBox">
+                  <p class="mathFont">y = <input class="graphValueInput" id="quadraticInput${this.id}1" type="text" placeholder="a" value=''> x<sup>2</sup> + <input class="graphValueInput"
+                      id="quadraticInput${this.id}2" type="text" placeholder="b" value=''> x +
+                    <input class="graphValueInput" id="quadraticInput${this.id}3" type="text" placeholder="c" value=''>
+                  </p>
+                </div>
+                <div class="graphRenderButtonBox">
+                  <button id="quadraticBtn${this.id}" class="renderGraphBtn quadraticBtn"></button>
+                </div>
+              </article>
+              <div class="eqListUnderLine"></div>
+            </section>
+
+            <section class="cubicEquation equationForm">
+              <div id="cubicList${this.id}" class="equationListBox">
+                <h2 class="equationTitle">Cubic Equation</h2><i id="cubicListIcon${this.id}"
+                  class="xi-angle-down listShowIcon"></i>
+              </div>
+              <article id="cubicControls${this.id}" class="equationControls">
+                <div class="equationInputBox">
+                  <p class="mathFont">y =  <input class="graphValueInput" id="cubicInput${this.id}1" type="text" placeholder="a" value=''> x<sup>3</sup> + <input class="graphValueInput"
+                      id="cubicInput${this.id}2" type="text" placeholder="b" value=''> x<sup>2</sup> + <input class="graphValueInput" id="cubicInput${this.id}3" type="text" placeholder="c" value=''> x + <input class="graphValueInput"
+                      id="cubicInput${this.id}4" type="text" placeholder="d" value=''></p>
+                </div>
+                <div class="graphRenderButtonBox">
+                  <button id="cubicBtn${this.id}" class="renderGraphBtn cubicBtn"></button>
+                </div>
+              </article>
+              <div class="eqListUnderLine"></div>
+            </section>
+
+            <section class="circleEquation equationForm">
+              <div id="circleList${this.id}" class="equationListBox">
+                <h2 class="equationTitle">Circle Equation</h2><i id="circleListIcon${this.id}"
+                  class="xi-angle-down listShowIcon"></i>
+              </div>
+              <article id="circleControls${this.id}" class="equationControls">
+                <div class="equationInputBox">
+                  <p class="mathFont">( x - <input class="graphValueInput" id="circleInput${this.id}1" type="text" placeholder="a" value=''> )<sup>2</sup> + ( y - <input class="graphValueInput"
+                      id="circleInput${this.id}2" type="text" placeholder="b" value=''> )<sup>2</sup> =
+                  <input class="graphValueInput" id="circleInput${this.id}3" type="text" placeholder="r" value=''></p>
+                </div>
+
+                <div class="graphRenderButtonBox">
+                  <button id="circleBtn${this.id}" class="renderGraphBtn circleBtn"></button>
+                </div>
+              </article>
+              <div class="eqListUnderLine"></div>
+            </section>
+          </section>
+          <!-- canvas -->
+          <section id="canvasArea${this.id}" class="canvasArea">
+            <article class="canvasTopIconBox">
+              <div class="firstIconBox">
+                <i id="renewCanvas${this.id}" class="xi-my-location canvasIcon"></i>
+              </div>
+              <div class="secondIconBox">
+                <i id="leftCanvas${this.id}" class="xi-arrow-left canvasIcon"></i>
+                <i id="upCanvas${this.id}" class="xi-arrow-up canvasIcon"></i>
+                <i id="downCanvas${this.id}" class="xi-arrow-down canvasIcon"></i>
+                <i id="rightCanvas${this.id}" class="xi-arrow-right canvasIcon"></i>
+              </div>
+              <div class="thirdIconBox">
+                <i id="scaleUpCanvas${this.id}" class="xi-zoom-in canvasIcon"></i>
+                <i id="scaleDownCanvas${this.id}" class="xi-zoom-out canvasIcon"></i>
+              </div>
+            </article>
+            <canvas id="canvas${this.id}" class="canvas" width="500" height="500"></canvas>
+            <article class="canvasBottomIconBox">
+              <span id="refreshCanvas${this.id}" class="canvasClearBtn">Clear <i
+                  class="xi-refresh canvasClearIcon"></i></span>
+            </article>
+          </section>
+        </div>
+       `;
+            const CSScomponent = `
+              .mathFont,sup{
+                font-family: 'STIX Two Math', serif;
+                font-size: 25px;
+              }
+              .equationWrap {
+                display: none;
+                justify-content: center;
+                align-items: center;
+                box-shadow: rgba(39, 39, 39, 0.3) 0px 19px 38px, rgba(0, 0, 0, 0.1) 0px 15px 12px;
+                height: 730px;
+                border-radius: 10px;
+                width: 1200px;
+                background-color: #aab4b894;
+                margin-left: 60px;
+                transition: 0.7s;
+                transform: translateX(120%);
+              }
+
+              .equationArea {
+                width: 540px;
+                height: 665px;
+                background: #fff;
+                padding: 20px;
+                border-radius: 10px;
+              }
+
+              .equationForm {
+                margin: 5px 0;
+              }
+
+              .removeMargin {
+                margin: 0;
+              }
+
+              .equationListBox {
+                position: relative;
+                cursor: pointer;
+                background: transparent;
+                z-index: 100;
+              }
+
+              .equationTitle {
+                position: relative;
+                margin: 12px 0 12px 7px;
+                display: inline-block;
+                width: 93%;
+                font-size: 22.8px;
+                z-index: -1;
+              }
+
+              .listShowIcon {
+                font-size: 22px;
+                font-weight: 580;
+              }
+
+              .equationControls {
+                width: 500px;
+                height: 20%;
+                background-color: #E7E8EB;
+                border-radius: 10px;
+                padding-left: 20px;
+                display: none;
+              }
+
+              .equationInputBox {
+                width: 83%;
+                margin-top: 17.5px;
+                font-weight: 400;
+              }
+
+              .graphRenderButtonBox {
+                width: 17%;
+                height: 80px;
+                text-align: center;
+                border-radius: 0 10px 10px 0;
+              }
+
+              .renderGraphBtn {
+                margin-top: 9.5px;
+                width: 60px;
+                height: 60px;
+                background-color: #ffffff;
+                border-radius: 10px;
+                border: none;
+                box-shadow: rgba(0, 0, 0, 0.2) 2px 3px 2px 0px;
+                transition: 0.2s;
+                cursor: pointer;
+              }
+
+              .renderGraphBtn:hover {
+                background-color: #f3f3f3;
+                box-shadow: rgba(0, 0, 0, 0.2) 2px 3px 2px 0px;
+                transform: translateY(-1px);
+              }
+
+              .renderGraphBtn:active {
+                background-color: #e0e0e0;
+                box-shadow: inset rgba(0, 0, 0, 0.2) 2px 3px 4px 0px;
+                transform: translateY(1px);
+              }
+
+              /* == renderGraphBtn img == */
+              .linearBtn {
+                background-image: url("images/graphLineR.png");
+                background-size: contain;
+              }
+
+              .quadraticBtn {
+                background-image: url("images/graphLineB.png");
+                background-size: contain;
+              }
+
+              .cubicBtn {
+                background-image: url("images/graphLineG.png");
+                background-size: contain;
+              }
+
+              .circleBtn {
+                background-image: url("images/graphLineP.png");
+                background-size: contain;
+              }
+
+              .eqListUnderLine {
+                margin: 14px 0 0px;
+                width: 500px;
+                height: 2px;
+                background-color: #A8A9B3;
+                border-radius: 10px;
+              }
+
+              /* sin letterSpacing */
+              .spacingSin {
+                letter-spacing: 2.3px;
+              }
+
+              .graphValueInput {
+                width: 40px;
+                height: 30px;
+                text-align: right;
+                background-repeat: no-repeat;
+              }
+
+              input::placeholder {
+                text-align: center;
+                padding-bottom: 2px;
+                font-family: 'STIX Two Math', serif;
+                font-size: 23px;
+              }
+
+              /* === canvas area === */
+              .canvasArea {
+                background-color: #fff;
+                width: 565px;
+                height: 665px;
+                border-radius: 10px;
+                margin-left: 30px;
+                display: flex;
+                flex-direction: column;
+              }
+
+              .canvasTopIconBox {
+                width: 100%;
+                height: 50px;
+                background: #7F7F86;
+                border-radius: 10px 10px 0 0;
+                display: flex;
+                align-items: center;
+              }
+
+              /* 캔버스 스타일 */
+              .canvas {
+                width: 565px;
+                height: 565px;
+                background: #ffffff;
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+
+              .firstIconBox {
+                width: 13%;
+                margin-left: 10px;
+              }
+
+              .secondIconBox {
+                width: 67%;
+              }
+
+              .thirdIconBox {
+                width: 20%;
+              }
+
+              .firstIconBox {
+                width: 13%;
+                margin-left: 10px;
+              }
+
+
+              /* 아이콘 스타일 */
+              .canvasIcon {
+                font-size: 26px;
+                margin: 8px;
+                cursor: pointer;
+                pointer-events: fill;
+                transition: 0.2s;
+                border-radius: 50%;
+                padding: 4px;
+                color: #fff;
+              }
+
+              .canvasIcon:hover {
+                background: #fff;
+                color: #717177;
+              }
+
+              .canvasBottomIconBox {
+                width: 100%;
+                height: 50px;
+                background: #7F7F86;
+                border-radius: 0 0 10px 10px;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+              }
+
+              .canvasClearBtn {
+                display: inline-block;
+                width: 110px;
+                height: 35px;
+                text-align: center;
+                margin-right: 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                line-height: 35px;
+                color: #fff;
+                transition: 0.2s;
+              }
+
+              .canvasClearIcon {
+                font-size: 20px;
+                color: #fff;
+              }
+
+              .canvasClearBtn:hover {
+                background: #fff;
+                color: #7F7F86;
+                font-weight: 500;
+              }
+
+              .canvasClearBtn:hover .canvasClearIcon {
+                color: #7F7F86;
+                font-weight: 600;
+              }
+    `;
+            targetDom.innerHTML += `
+          ${HTMLcomponent}
+          <style>${CSScomponent}</style>
+        `;
+          }//$initCalc
+
+          showData(eventDetails) {
+            // equationList _ clickEvent
+            const { shapeIds, listEventId, listEventIndex } = eventDetails;  // 디스트럭처링
+
+            const controlElement = document.getElementById(`${shapeIds[listEventIndex]}Controls${this.id}`);
+            const ListElement = document.getElementById(`${shapeIds[listEventIndex]}ListIcon${this.id}`);
+
+            const listIconUpdate = (displayStatus) => {
+              if (displayStatus == "flex") {
+                ListElement.classList.remove('xi-angle-down');
+                ListElement.classList.add('xi-angle-up');
+              } else if (displayStatus == "none") {
+                ListElement.classList.add('xi-angle-down');
+                ListElement.classList.remove('xi-angle-up');
+              }
+            }
+            const displayStatus = controlElement.style.display === "flex" ? "none" : "flex";
+            controlElement.style.display = displayStatus;
+            listIconUpdate(displayStatus);
+
+          }//$showData
+
+          listReceiveData(eventAreaDom) {
+            // eventDetailsObject
+            const eventDetails = {
+              shapeIds: ['linear', 'quadratic', 'cubic', 'circle'],
+              listIds: [],
+              listEventIndex: 0,
+            }
+            // list id 할당
+            for (let i = 0; i < eventDetails.shapeIds.length; i++) {
+              eventDetails.listIds.push(`${eventDetails.shapeIds[i]}List${this.id}`)
+            }
+
+            // equationList _ clickEvent
+            eventAreaDom.addEventListener("click", (event) => {
+              const targetId = event.target.id;
+              if (eventDetails.listIds.includes(targetId)) {
+                eventDetails.listEventIndex = eventDetails.listIds.indexOf(targetId); //for문 -> indexOf update
+                this.showData(eventDetails);
+              }
+            });
+          }//$listReceiveData
+
+          drawOnCanvas() {
+            class Canvas {
+              constructor(id) {
+                this.id = id;
+                this.canvas = null;
+                this.pen = null;
+                this.cWidth = null;
+                this.cHeight = null;
+                this.xAxisMove = 0;
+                this.yAxisMove = 0;
+                this.scaleFactor = 20;
+              }//
+
+              initCanvas() {
+                this.canvas = document.getElementById(`canvas${this.id}`);
+                this.pen = this.canvas.getContext('2d');
+                this.cWidth = this.canvas.getAttribute('width');
+                this.cHeight = this.canvas.getAttribute('height');
+                this.pen.clearRect(0, 0, this.cWidth, this.cHeight);
+                this.pen.fillStyle = "#222";
+                this.crossConfig();
+                this.scaleConfig();
+              }//
+
+              refreshCanvas() {
+                this.pen.clearRect(0, 0, this.cWidth, this.cHeight);
+                this.pen.fillStyle = "#222";
+                this.crossConfig();
+                this.scaleConfig();
+              }//
+
+              printDot(x, y) {
+                this.pen.fillRect(x + this.xAxisMove, y + this.yAxisMove, 1, 1);
+              }//
+
+              modiDot(x, y) {
+                this.printDot((this.cWidth / 2) + (x * this.scaleFactor), (this.cHeight / 2) + (-y) * this.scaleFactor);
+              }//
+
+              crossConfig() {
+                for (let i = -(this.cWidth + this.scaleFactor); i <= (this.cWidth + this.scaleFactor); i++) {
+                  this.printDot(i, this.cHeight / 2);
+                }
+
+                for (let i = -(this.cHeight + this.scaleFactor); i <= (this.cHeight + this.scaleFactor); i++) {
+                  this.printDot(this.cWidth / 2, i);
+                }
+              }//
+
+              scaleConfig() {
+                const size = this.scaleFactor / 5;
+
+                for (let x = -(this.cWidth / 2 + this.scaleFactor); x <= (this.cWidth / 2 + this.scaleFactor); x++) {
+                  for (let y = -size; y <= size; y++) {
+                    this.printDot((x * this.scaleFactor) + (this.cWidth / 2), (y + this.cHeight / 2));
+                    this.printDot(-(x * this.scaleFactor) + (this.cWidth / 2), (y + this.cHeight / 2));
+                  }
+                }
+
+                for (let y = -(this.cHeight / 2 + this.scaleFactor); y <= (this.cHeight / 2 + this.scaleFactor); y++) {
+                  for (let x = -size; x <= size; x++) {
+                    this.printDot(x + (this.cWidth / 2), (y * this.scaleFactor) + (this.cHeight / 2));
+                    this.printDot(x + (this.cWidth / 2), -(y * this.scaleFactor) + (this.cHeight / 2));
+                  }
+                }
+
+              }//
+
+              inputDataRefresh() {
+                const inputEventDetails = {
+                  shapeIds: ['linear', 'quadratic', 'cubic', 'circle'],
+                  InputIds: [
+                    ["", ""],
+                    ["", "", ""],
+                    ["", "", "", ""],
+                    ["", "", ""],
+                  ], // linearInput${this.id}1
+                };
+
+                /// inputEventDetails 할당 ///
+                for (let i = 0; i < inputEventDetails.InputIds.length; i++) {
+                  for (let j = 0; j < inputEventDetails.InputIds[i].length; j++) {
+                    inputEventDetails.InputIds[i][j] = (`${inputEventDetails.shapeIds[i]}Input${this.id}${j + 1}`)
+                  }
+                }
+                ///inputEventDetails 초기화 ///
+                for (let i = 0; i < inputEventDetails.InputIds.length; i++) {
+                  for (let j = 0; j < inputEventDetails.InputIds[i].length; j++) {
+                    document.getElementById(`${inputEventDetails.InputIds[i][j]}`).value = '';
+                  }
+                }
+              }//
+
+              inputReceiveData(eventAreaDom) {
+                const inputEventDetails = {
+                  shapeIds: ['linear', 'quadratic', 'cubic', 'circle'],
+                  controlsIds: [],
+                  graphRenderIds: [],
+                  value: [
+                    [0, 0],
+                    [0, 0, 0],
+                    [0, 0, 0, 0],
+                    [0, 0, 0]
+                  ],
+                  graphData: []
+                };
+
+                /// controlsIds , graphRenderIds 할당 ///
+                for (let i = 0; i < inputEventDetails.shapeIds.length; i++) {
+                  inputEventDetails.controlsIds.push(`${inputEventDetails.shapeIds[i]}Controls${this.id}`);
+                  inputEventDetails.graphRenderIds.push(`${inputEventDetails.shapeIds[i]}Btn${this.id}`);
+                }
+
+                /// [Event::input] controlsIds ///
+                for (let i = 0; i < inputEventDetails.controlsIds.length; i++) {
+                  const eventId = document.getElementById(inputEventDetails.controlsIds[i]);
+                  eventId.addEventListener("input", (event) => {
+                    const eventInputIndex = Number(event.target.id.slice(-1)) - 1;
+                    const eventValue = Number(eval(event.target.value));
+                    inputEventDetails.value[i][eventInputIndex] = eventValue;
+                  });
+                }
+
+                /// [Event::click] graphRenderIds ///
+                for (let i = 0; i < inputEventDetails.graphRenderIds.length; i++) {
+                  const eventId = document.getElementById(inputEventDetails.graphRenderIds[i]);
+                  eventId.addEventListener("click", () => {
+                    const eventMode = inputEventDetails.shapeIds[i];
+                    const eventValue = inputEventDetails.value[i];
+                    this.renderGraph(eventMode, eventValue); // 그래프그리기 함수 호출
+                    inputEventDetails.graphData.push({ mode: eventMode, value: eventValue });
+                  });
+                }
+
+                /// [Event::click] canvas navigation ///
+                document.getElementById(`canvasArea${this.id}`).addEventListener("click", (event) => {
+                  const eventElement = event.target.id;
+                  const sliceLength = Number(this.id.length) + 6;
+                  let clickNavigationEvent = eventElement.slice(0, -(sliceLength));
+                  if (clickNavigationEvent == "refresh") {
+                    inputEventDetails.graphData = [];
+                    inputEventDetails.value = [
+                      [0, 0],
+                      [0, 0, 0],
+                      [0, 0, 0, 0],
+                      [0, 0, 0]
+                    ];
+                  }
+                  const graphData = inputEventDetails.graphData;
+                  this.applyViewUpdates(clickNavigationEvent, graphData);
+                });
+
+              }//$inputReceiveData
+
+              renderGraph(eventMode, eventValue) {
+                const eventValueArr = [...eventValue];
+                switch (eventMode) {
+                  case 'linear':
+                    this.pen.fillStyle = "#C74540";
+                    const [linearA, linearB] = eventValueArr;
+                    for (let x = -(this.cWidth / 2); x <= this.cWidth / 2; x += 0.01) {
+                      const y = (linearA * x) + linearB;
+                      this.modiDot(x, y);
+                    }
+                    break;
+                  case 'quadratic':
+                    this.pen.fillStyle = "#2071B4";
+                    const [quadraticA, quadraticB, quadraticC] = eventValueArr;
+                    for (let x = -(this.cWidth / 2); x <= this.cWidth / 2; x += 0.01) {
+                      const y = (quadraticA * x ** 2) + (quadraticB * x) + quadraticC;
+                      this.modiDot(x, y);
+                    }
+                    break;
+                  case 'cubic':
+                    this.pen.fillStyle = "#348D46";
+                    const [cubicA, cubicB, cubicC, cubicD] = eventValueArr;
+                    for (let x = -this.cWidth / 2; x <= this.cWidth / 2; x += 0.01) {
+                      const y = (cubicA * x ** 3) + (cubicB * x ** 2) + (cubicC * x) + cubicD;
+                      this.modiDot(x, y);
+                    }
+                    break;
+                  case 'circle':
+                    this.pen.fillStyle = "#755FA6";
+                    const [circleX, circleY, radius] = eventValueArr;
+                    for (let i = 0; i <= 360; i += 0.01) {
+                      const cos = Math.cos((i * Math.PI) / 180) * radius + circleX;
+                      const sin = Math.sin((i * Math.PI) / 180) * radius + circleY;
+                      this.modiDot(cos, sin);
+                    }
+                    break;
+                }
+              }//
+
+              applyViewUpdates(clickNavigationEvent, graphData) {
+                const graphDataArray = [...graphData];
+                switch (clickNavigationEvent) {
+                  case "renew":
+                    this.xAxisMove = 0;
+                    this.yAxisMove = 0;
+                    this.scaleFactor = 20;
+                    break;
+                  case "left":
+                    this.xAxisMove += 20;
+                    break;
+                  case "up":
+                    this.yAxisMove += 20;
+                    break;
+                  case "down":
+                    this.yAxisMove -= 20;
+                    break;
+                  case "right":
+                    this.xAxisMove -= 20;
+                    break;
+                  case "scaleUp":
+                    if (this.scaleFactor < 100) {
+                      this.scaleFactor += 20;
+                    }
+                    break;
+                  case "scaleDown":
+                    if (this.scaleFactor != 10) {
+                      this.scaleFactor -= 10;
+                    }
+                    break;
+                  case "refresh":
+                    this.xAxisMove = 0;
+                    this.yAxisMove = 0;
+                    this.scaleFactor = 20;
+                    this.refreshCanvas();
+                    this.inputDataRefresh();
+                }
+
+                this.refreshCanvas();
+                // 그래프 다시 그리기
+                graphDataArray.forEach((objValue) => {
+                  this.renderGraph(objValue['mode'], objValue['value']);
+                })
+              }//
+
+              controlCanvas() {
+                this.initCanvas();
+                this.inputReceiveData(document.getElementById(`${this.id}Area`));
+                this.inputDataRefresh();
+              }//
+            }//
+            const canvas = new Canvas(`${this.id}`);
+            canvas.controlCanvas();
+          }//$drawOnCanvas
+
+          control(targetDom) {
+            this.initCalc(targetDom);
+            this.listReceiveData(document.getElementById(`${this.id}Area`));
+            this.drawOnCanvas();
+          }//$control
+        }//$GraphCal
+        const graphCalc = new GraphCal(`${this.id}`);
+        graphCalc.control(targetDom);
+      }
+      graphCalcDisplay() {
+        document.getElementById(`graphDisplay${this.id}`).addEventListener("click", () => {
+          const equationWrap = document.getElementById(`equationWrap${this.id}`)
+          if (equationWrap.style.display === "flex") {
+            equationWrap.style.display = "none"
+          } else {
+            equationWrap.style.display = "flex"
+          }
+
+          setTimeout(() => {
+            if (equationWrap.style.transform == "translateX(0%)") {
+              equationWrap.style.transform = "translateX(120%)"
+            } else {
+              equationWrap.style.transform = "translateX(0%)"
+            }
+          }, 200)
+        })
+      }
+      control(targetDom) {
+        this.initCalc(targetDom);
+        this.graphCalc(targetDom);
+        this.receiveData(document.getElementById(`result${this.id}`));
+        this.graphCalcDisplay();
+      }//$control
+    }//$Calculator
+
+    /// CreateCalc 생성 class ///
+    class CreateCalc {
+      constructor(id) {
+        this.id = id;
+        this.storage = {};
+      }
+      receiveData(eventTargetDOM, outputElement, infoMessageDOM) {
+        let createCount = 1;
+        eventTargetDOM.addEventListener("click", (event) => {
+          createCount += 1;
+          this.renderView(outputElement, infoMessageDOM, createCount);
+        })
+      }
+      renderView(outputElement, infoMessageDOM, createCount) {
+        const newCalculator = new Calculator(`Calculator${createCount}`);
+        this.storage[`Calculator${createCount}`] = newCalculator;
+        /// DOM 영역 생성 ///
+        const newCalcArea = document.createElement('div');
+        newCalcArea.id = `calcArea${createCount}`;
+        newCalcArea.className = 'calcArea';
+        outputElement.appendChild(newCalcArea);
+        newCalculator.control(document.getElementById(`calcArea${createCount}`));
+
+        /// 팝업 ///
+        setTimeout(() => {
+          infoMessageDOM.innerText = `Calculator ${createCount} created`;
+          infoMessageDOM.style.opacity = "1";
+          setTimeout(() => {
+            infoMessageDOM.style.opacity = "0";
+          }, 2100)
+        }, 50)
+      }
+      getDefaultValue() {
+        /// 디폴트값 ///
+        this.storage['Calculator1'] = new Calculator('Calculator1');
+        this.storage['Calculator1'].control(document.getElementById('calcArea1'));
+      }
+      control(eventTargetDOM, outputElement, infoMessageDOM) {
+        this.receiveData(eventTargetDOM, outputElement, infoMessageDOM);
+        this.getDefaultValue();
+      }
+    }//$CreateCalc
+
+    const main =(()=>{
+     const createCalc = new CreateCalc('createCalc');
+     createCalc.control(
+       document.getElementById("createCalcBtn"),
+       document.getElementById("calcWrapper"),
+       document.getElementById("calcCreationNotice")
+     );
+   })();
+  </script>
+</body>
+
+</html>
